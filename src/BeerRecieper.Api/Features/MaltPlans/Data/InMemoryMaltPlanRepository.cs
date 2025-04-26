@@ -1,6 +1,4 @@
-using Lab.BeerRecieper.Features.MaltPlans.Data;
-
-namespace Lab.BeerRecieper.Features.MaltPlans.Data;
+namespace BeerRecieper.Api.Features.MaltPlans.Data;
 
 public class InMemoryMaltPlanRepository : IMaltPlanRepository
 {

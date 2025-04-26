@@ -1,10 +1,10 @@
-using Lab.BeerRecieper.Features.Common;
-using Lab.BeerRecieper.Features.MaltPlans.Contracts;
-using Lab.BeerRecieper.Features.MaltPlans.Contracts.Commands;
-using Lab.BeerRecieper.Features.MaltPlans.Contracts.Requests;
+using BeerRecieper.Api.Features.Common;
+using BeerRecieper.Api.Features.MaltPlans.Contracts;
+using BeerRecieper.Api.Features.MaltPlans.Contracts.Commands;
+using BeerRecieper.Api.Features.MaltPlans.Contracts.Requests;
 using Microsoft.AspNetCore.Http;
 
-namespace Lab.BeerRecieper.Features.MaltPlans.Endpoints;
+namespace BeerRecieper.Api.Features.MaltPlans.Endpoints;
 
 public static class AddMaltEndpoint
 {

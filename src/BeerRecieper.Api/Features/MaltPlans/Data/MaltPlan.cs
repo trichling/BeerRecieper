@@ -1,4 +1,4 @@
-namespace Lab.BeerRecieper.Features.MaltPlans.Data;
+namespace BeerRecieper.Api.Features.MaltPlans.Data;
 
 public class MaltPlan
 {

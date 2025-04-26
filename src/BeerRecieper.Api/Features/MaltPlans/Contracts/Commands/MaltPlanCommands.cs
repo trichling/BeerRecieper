@@ -1,4 +1,4 @@
-namespace Lab.BeerRecieper.Features.MaltPlans.Contracts.Commands;
+namespace BeerRecieper.Api.Features.MaltPlans.Contracts.Commands;
 
 public record CreateMaltPlanCommand(double TotalWeightKg);
 public record UpdateMaltPlanTotalWeightCommand(Guid Id, double TotalWeightKg);

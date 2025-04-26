@@ -1,8 +1,7 @@
-using Lab.BeerRecieper.Features.Common;
-using Lab.BeerRecieper.Features.MaltPlans.Contracts;
-using Microsoft.AspNetCore.Http;
+using BeerRecieper.Api.Features.Common;
+using BeerRecieper.Api.Features.MaltPlans.Contracts;
 
-namespace Lab.BeerRecieper.Features.MaltPlans.Endpoints;
+namespace BeerRecieper.Api.Features.MaltPlans.Endpoints;
 
 public static class GetAllMaltPlansEndpoint
 {

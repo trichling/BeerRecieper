@@ -1,7 +1,8 @@
-using Lab.BeerRecieper.Features.BeerRecipes.Contracts;
-using Lab.BeerRecieper.Features.BeerRecipes.Data;
+using BeerRecieper.Api.Features.BeerRecipes.Contracts;
+using BeerRecieper.Api.Features.BeerRecipes.Data;
+using BeerRecieper.Api.Features.BeerRecipes.Contracts.Commands;
 
-namespace Lab.BeerRecieper.Features.BeerRecipes;
+namespace BeerRecieper.Api.Features.BeerRecipes;
 
 internal static class BeerRecipeMapper
 {

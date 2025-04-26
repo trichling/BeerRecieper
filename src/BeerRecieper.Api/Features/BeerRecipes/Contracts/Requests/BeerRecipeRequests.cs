@@ -1,4 +1,4 @@
-namespace Lab.BeerRecieper.Features.BeerRecipes.Contracts.Requests;
+namespace BeerRecieper.Api.Features.BeerRecipes.Contracts.Requests;
 
 public record CreateBeerRecipeRequest(string Name, string Description);
 public record UpdateBeerRecipeRequest(string Name, string Description);

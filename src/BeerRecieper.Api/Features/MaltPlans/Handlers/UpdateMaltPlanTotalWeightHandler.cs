@@ -1,9 +1,9 @@
-using Lab.BeerRecieper.Features.Common;
-using Lab.BeerRecieper.Features.MaltPlans.Contracts;
-using Lab.BeerRecieper.Features.MaltPlans.Contracts.Commands;
-using Lab.BeerRecieper.Features.MaltPlans.Data;
+using BeerRecieper.Api.Features.Common;
+using BeerRecieper.Api.Features.MaltPlans.Contracts;
+using BeerRecieper.Api.Features.MaltPlans.Contracts.Commands;
+using BeerRecieper.Api.Features.MaltPlans.Data;
 
-namespace Lab.BeerRecieper.Features.MaltPlans.Handlers;
+namespace BeerRecieper.Api.Features.MaltPlans.Handlers;
 
 public class UpdateMaltPlanTotalWeightHandler : IHandler<UpdateMaltPlanTotalWeightCommand, MaltPlanResponse?>
 {

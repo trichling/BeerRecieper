@@ -1,5 +1,5 @@
-using Lab.BeerRecieper.Features.BeerRecipes;
-using Lab.BeerRecieper.Features.MaltPlans;
+using BeerRecieper.Api.Features.BeerRecipes;
+using BeerRecieper.Api.Features.MaltPlans;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddEndpointsApiExplorer();

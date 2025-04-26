@@ -1,4 +1,4 @@
-namespace Lab.BeerRecieper.Features.MaltPlans.Contracts.Requests;
+namespace BeerRecieper.Api.Features.MaltPlans.Contracts.Requests;
 
 public record CreateMaltPlanRequest(double TotalWeightKg);
 public record UpdateMaltPlanWeightRequest(double TotalWeightKg);

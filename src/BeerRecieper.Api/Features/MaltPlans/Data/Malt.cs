@@ -1,4 +1,4 @@
-namespace Lab.BeerRecieper.Features.MaltPlans.Data;
+namespace BeerRecieper.Api.Features.MaltPlans.Data;
 
 public record Malt(string Name, double RelativeAmount, double MinEbc, double MaxEbc)
 {

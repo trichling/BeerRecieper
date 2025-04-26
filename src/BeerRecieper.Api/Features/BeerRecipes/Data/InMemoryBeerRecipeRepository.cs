@@ -1,6 +1,6 @@
-using Lab.BeerRecieper.Features.BeerRecipes.Data;
+using BeerRecieper.Api.Features.BeerRecipes.Data;
 
-namespace Lab.BeerRecieper.Features.BeerRecipes.Data;
+namespace BeerRecieper.Api.Features.BeerRecipes.Data;
 
 public class InMemoryBeerRecipeRepository : IBeerRecipeRepository
 {

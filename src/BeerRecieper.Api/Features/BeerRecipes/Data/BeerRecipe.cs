@@ -1,4 +1,4 @@
-namespace Lab.BeerRecieper.Features.BeerRecipes.Data;
+namespace BeerRecieper.Api.Features.BeerRecipes.Data;
 
 public class BeerRecipe
 {

@@ -1,13 +1,13 @@
-using Lab.BeerRecieper.Features.Common;
-using Lab.BeerRecieper.Features.MaltPlans.Contracts;
-using Lab.BeerRecieper.Features.MaltPlans.Contracts.Commands;
-using Lab.BeerRecieper.Features.MaltPlans.Contracts.Requests;
-using Lab.BeerRecieper.Features.MaltPlans.Data;
-using Lab.BeerRecieper.Features.MaltPlans.Endpoints;
-using Lab.BeerRecieper.Features.MaltPlans.Handlers;
+using BeerRecieper.Api.Features.Common;
+using BeerRecieper.Api.Features.MaltPlans.Contracts;
+using BeerRecieper.Api.Features.MaltPlans.Contracts.Commands;
+using BeerRecieper.Api.Features.MaltPlans.Contracts.Requests;
+using BeerRecieper.Api.Features.MaltPlans.Data;
+using BeerRecieper.Api.Features.MaltPlans.Endpoints;
+using BeerRecieper.Api.Features.MaltPlans.Handlers;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Lab.BeerRecieper.Features.MaltPlans;
+namespace BeerRecieper.Api.Features.MaltPlans;
 
 public static class MaltPlansModule
 {
@@ -21,6 +21,8 @@ public static class MaltPlansModule
         services.AddScoped<IHandler<AddMaltCommand, MaltPlanResponse?>, AddMaltHandler>();
         services.AddScoped<IHandler<RemoveMaltCommand, MaltPlanResponse?>, RemoveMaltHandler>();
         services.AddScoped<IHandler<UpdateMaltAmountCommand, MaltPlanResponse?>, UpdateMaltAmountHandler>();
+
+        services.AddScoped<IInvoke<UpdateMaltPlanTotalWeightCommand>, UpdateMaltPlanTotalWeightHandler>();
         return services;
     }
 

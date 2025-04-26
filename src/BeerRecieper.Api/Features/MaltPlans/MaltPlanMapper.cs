@@ -1,7 +1,7 @@
-using Lab.BeerRecieper.Features.MaltPlans.Contracts;
-using Lab.BeerRecieper.Features.MaltPlans.Data;
+using BeerRecieper.Api.Features.MaltPlans.Contracts;
+using BeerRecieper.Api.Features.MaltPlans.Data;
 
-namespace Lab.BeerRecieper.Features.MaltPlans;
+namespace BeerRecieper.Api.Features.MaltPlans;
 
 internal static class MaltPlanMapper
 {

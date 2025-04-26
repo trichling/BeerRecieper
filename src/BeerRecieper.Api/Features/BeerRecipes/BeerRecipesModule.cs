@@ -1,13 +1,13 @@
-using Lab.BeerRecieper.Features.BeerRecipes.Contracts;
-using Lab.BeerRecieper.Features.BeerRecipes.Contracts.Commands;
-using Lab.BeerRecieper.Features.BeerRecipes.Contracts.Requests;
-using Lab.BeerRecieper.Features.BeerRecipes.Data;
-using Lab.BeerRecieper.Features.BeerRecipes.Endpoints;
-using Lab.BeerRecieper.Features.BeerRecipes.Handlers;
-using Lab.BeerRecieper.Features.Common;
+using BeerRecieper.Api.Features.BeerRecipes.Contracts;
+using BeerRecieper.Api.Features.BeerRecipes.Contracts.Commands;
+using BeerRecieper.Api.Features.BeerRecipes.Contracts.Requests;
+using BeerRecieper.Api.Features.BeerRecipes.Data;
+using BeerRecieper.Api.Features.BeerRecipes.Endpoints;
+using BeerRecieper.Api.Features.BeerRecipes.Handlers;
+using BeerRecieper.Api.Features.Common;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Lab.BeerRecieper.Features.BeerRecipes;
+namespace BeerRecieper.Api.Features.BeerRecipes;
 
 public static class BeerRecipesModule
 {

@@ -1,4 +1,4 @@
-namespace Lab.BeerRecieper.Features.Common;
+namespace BeerRecieper.Api.Features.Common;
 
 public record Unit
 {
