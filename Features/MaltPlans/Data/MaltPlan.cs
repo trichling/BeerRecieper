@@ -22,7 +22,15 @@ public class MaltPlan
         if (maxEbc < minEbc)
             throw new ArgumentException("Maximum EBC must be greater than or equal to minimum EBC", nameof(maxEbc));
 
-        _malts.Add(new Malt(name, relativeAmount, minEbc, maxEbc));
+        var index = _malts.FindIndex(m => m.Name == name);
+        if (index != -1)
+        {
+            _malts[index] = _malts[index] with { RelativeAmount = _malts[index].RelativeAmount + relativeAmount };
+        }
+        else
+        {
+            _malts.Add(new Malt(name, relativeAmount, minEbc, maxEbc));
+        }
     }
 
     public void RemoveMalt(string name)
