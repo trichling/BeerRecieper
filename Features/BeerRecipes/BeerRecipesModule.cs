@@ -14,11 +14,11 @@ public static class BeerRecipesModule
     public static IServiceCollection AddBeerRecipeServices(this IServiceCollection services)
     {
         services.AddSingleton<IBeerRecipeRepository, InMemoryBeerRecipeRepository>();
-        services.AddScoped<IHandler<Unit, IEnumerable<BeerRecipeResponse>>, GetAllRecipesHandler>();
-        services.AddScoped<IHandler<GetBeerRecipeByIdCommand, BeerRecipeResponse?>, GetRecipeByIdHandler>();
-        services.AddScoped<IHandler<CreateBeerRecipeCommand, BeerRecipeResponse>, CreateRecipeHandler>();
-        services.AddScoped<IHandler<UpdateBeerRecipeCommand, BeerRecipeResponse?>, UpdateRecipeHandler>();
-        services.AddScoped<IHandler<DeleteBeerRecipeCommand, Unit>, DeleteRecipeHandler>();
+        services.AddScoped<IHandler<Unit, IEnumerable<BeerRecipeResponse>>, GetAllBeerRecipesHandler>();
+        services.AddScoped<IHandler<GetBeerRecipeByIdCommand, BeerRecipeResponse?>, GetBeerRecipeByIdHandler>();
+        services.AddScoped<IHandler<CreateBeerRecipeCommand, BeerRecipeResponse>, CreateBeerRecipeHandler>();
+        services.AddScoped<IHandler<UpdateBeerRecipeCommand, BeerRecipeResponse?>, UpdateBeerRecipeHandler>();
+        services.AddScoped<IHandler<DeleteBeerRecipeCommand, Unit>, DeleteBeerRecipeHandler>();
         return services;
     }
 

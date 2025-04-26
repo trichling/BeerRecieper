@@ -4,11 +4,11 @@ using Lab.BeerRecieper.Features.Common;
 
 namespace Lab.BeerRecieper.Features.BeerRecipes.Handlers;
 
-public class DeleteRecipeHandler : IHandler<DeleteBeerRecipeCommand, Unit>
+public class DeleteBeerRecipeHandler : IHandler<DeleteBeerRecipeCommand, Unit>
 {
     private readonly IBeerRecipeRepository _repository;
 
-    public DeleteRecipeHandler(IBeerRecipeRepository repository)
+    public DeleteBeerRecipeHandler(IBeerRecipeRepository repository)
     {
         _repository = repository;
     }

@@ -5,11 +5,11 @@ using Lab.BeerRecieper.Features.Common;
 
 namespace Lab.BeerRecieper.Features.BeerRecipes.Handlers;
 
-public class CreateRecipeHandler : IHandler<CreateBeerRecipeCommand, BeerRecipeResponse>
+public class CreateBeerRecipeHandler : IHandler<CreateBeerRecipeCommand, BeerRecipeResponse>
 {
     private readonly IBeerRecipeRepository _repository;
 
-    public CreateRecipeHandler(IBeerRecipeRepository repository)
+    public CreateBeerRecipeHandler(IBeerRecipeRepository repository)
     {
         _repository = repository;
     }
