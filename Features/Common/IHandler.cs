@@ -1,6 +1,17 @@
 namespace Lab.BeerRecieper.Features.Common;
 
-public interface IHandler<TRequest, TResponse>
+public interface IInvoke<TCommand>
 {
-    Task<TResponse> HandleAsync(TRequest request);
+    Task<Unit> InvokeAsync(TCommand request);
+}
+
+public interface IHandler<TCommand, TResult> : IInvoke<TCommand>
+{
+    async Task<Unit> IInvoke<TCommand>.InvokeAsync(TCommand request)
+    {
+        await HandleAsync(request);
+        return Unit.Value;
+    }
+
+    Task<TResult> HandleAsync(TCommand request);
 }

@@ -5,16 +5,16 @@ using Lab.BeerRecieper.Features.MaltPlans.Data;
 
 namespace Lab.BeerRecieper.Features.MaltPlans.Handlers;
 
-public class UpdateMaltPlanWeightHandler : IHandler<UpdateMaltPlanWeightCommand, MaltPlanResponse?>
+public class UpdateMaltPlanTotalWeightHandler : IHandler<UpdateMaltPlanTotalWeightCommand, MaltPlanResponse?>
 {
     private readonly IMaltPlanRepository _repository;
 
-    public UpdateMaltPlanWeightHandler(IMaltPlanRepository repository)
+    public UpdateMaltPlanTotalWeightHandler(IMaltPlanRepository repository)
     {
         _repository = repository;
     }
 
-    public async Task<MaltPlanResponse?> HandleAsync(UpdateMaltPlanWeightCommand command)
+    public async Task<MaltPlanResponse?> HandleAsync(UpdateMaltPlanTotalWeightCommand command)
     {
         var maltPlan = await _repository.GetByIdAsync(command.Id);
         if (maltPlan is null)

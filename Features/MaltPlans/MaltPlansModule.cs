@@ -17,7 +17,7 @@ public static class MaltPlansModule
         services.AddScoped<IHandler<Unit, IEnumerable<MaltPlanResponse>>, GetAllMaltPlansHandler>();
         services.AddScoped<IHandler<GetMaltPlanByIdCommand, MaltPlanResponse?>, GetMaltPlanByIdHandler>();
         services.AddScoped<IHandler<CreateMaltPlanCommand, MaltPlanResponse>, CreateMaltPlanHandler>();
-        services.AddScoped<IHandler<UpdateMaltPlanWeightCommand, MaltPlanResponse?>, UpdateMaltPlanWeightHandler>();
+        services.AddScoped<IHandler<UpdateMaltPlanTotalWeightCommand, MaltPlanResponse?>, UpdateMaltPlanTotalWeightHandler>();
         services.AddScoped<IHandler<AddMaltCommand, MaltPlanResponse?>, AddMaltHandler>();
         services.AddScoped<IHandler<RemoveMaltCommand, MaltPlanResponse?>, RemoveMaltHandler>();
         services.AddScoped<IHandler<UpdateMaltAmountCommand, MaltPlanResponse?>, UpdateMaltAmountHandler>();
@@ -40,8 +40,8 @@ public static class MaltPlansModule
             CreateMaltPlanEndpoint.Handle(request, handler))
             .WithName("CreateMaltPlan");
 
-        group.MapPut("/{id}/weight", ([FromRoute] Guid id, [FromBody] UpdateMaltPlanWeightRequest request, [FromServices] IHandler<UpdateMaltPlanWeightCommand, MaltPlanResponse?> handler) =>
-            UpdateMaltPlanWeightEndpoint.Handle(id, request, handler))
+        group.MapPut("/{id}/weight", ([FromRoute] Guid id, [FromBody] UpdateMaltPlanWeightRequest request, [FromServices] IHandler<UpdateMaltPlanTotalWeightCommand, MaltPlanResponse?> handler) =>
+            UpdateMaltPlanTotalWeightEndpoint.Handle(id, request, handler))
             .WithName("UpdateMaltPlanWeight");
 
         group.MapPost("/{id}/malts", ([FromRoute] Guid id, [FromBody] AddMaltRequest request, [FromServices] IHandler<AddMaltCommand, MaltPlanResponse?> handler) =>

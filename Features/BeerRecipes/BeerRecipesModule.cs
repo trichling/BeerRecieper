@@ -19,12 +19,15 @@ public static class BeerRecipesModule
         services.AddScoped<IHandler<CreateBeerRecipeCommand, BeerRecipeResponse>, CreateBeerRecipeHandler>();
         services.AddScoped<IHandler<UpdateBeerRecipeCommand, BeerRecipeResponse?>, UpdateBeerRecipeHandler>();
         services.AddScoped<IHandler<DeleteBeerRecipeCommand, Unit>, DeleteBeerRecipeHandler>();
+        services.AddScoped<IHandler<SetMaltPlanCommand, BeerRecipeResponse?>, SetMaltPlanHandler>();
+        services.AddScoped<IHandler<RemoveMaltPlanCommand, BeerRecipeResponse?>, RemoveMaltPlanHandler>();
+        services.AddScoped<IHandler<UpdateMaltTotalWeightInKgCommand, Unit>, UpdateMaltTotalWeightInKgHandler>();
         return services;
     }
 
     public static void MapBeerRecipeEndpoints(this IEndpointRouteBuilder app)
     {
-        var group = app.MapGroup("/beerRecipes").WithTags("Beer Recipes");
+        var group = app.MapGroup("/beerrecipes").WithTags("Beer Recipes");
 
         group.MapGet("/", ([FromServices] IHandler<Unit, IEnumerable<BeerRecipeResponse>> handler) =>
             GetAllRecipesEndpoint.Handle(handler))
@@ -45,5 +48,18 @@ public static class BeerRecipesModule
         group.MapDelete("/{id}", ([FromRoute] Guid id, [FromServices] IHandler<DeleteBeerRecipeCommand, Unit> handler) =>
             DeleteRecipeEndpoint.Handle(id, handler))
             .WithName("DeleteRecipe");
+
+        group.MapPut("/{id}/maltPlan", ([FromRoute] Guid id, [FromBody] AddMaltPlanRequest request, [FromServices] IHandler<SetMaltPlanCommand, BeerRecipeResponse?> handler) =>
+            SetMaltPlanEndpoint.Handle(id, request, handler))
+            .WithName("SetMaltPlan");
+
+        group.MapDelete("/{id}/maltplan", ([FromRoute] Guid id, [FromServices] IHandler<RemoveMaltPlanCommand, BeerRecipeResponse?> handler) =>
+            RemoveMaltPlanEndpoint.Handle(id, handler))
+            .WithName("RemoveMaltPlan");
+
+        group.MapPut("/{id}/malttotalweight/{weight}", async ([FromRoute] Guid id, [FromRoute] double weight, [FromServices] IHandler<UpdateMaltTotalWeightInKgCommand, Unit> handler) =>
+            await UpdateMaltTotalWeightInKgEndpoint.Handle(id, weight, handler))
+            .WithName("UpdateMaltPlanTotalWeight");
+
     }
 }
