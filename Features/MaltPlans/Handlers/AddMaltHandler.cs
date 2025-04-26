@@ -20,7 +20,7 @@ public class AddMaltHandler : IHandler<AddMaltCommand, MaltPlanResponse?>
         if (maltPlan is null)
             return null;
 
-        maltPlan.AddMalt(command.MaltName, command.RelativeAmount);
+        maltPlan.AddMalt(command.MaltName, command.RelativeAmount, command.MinEbc, command.MaxEbc);
         await _repository.UpdateAsync(maltPlan);
         return MaltPlanMapper.ToResponse(maltPlan);
     }

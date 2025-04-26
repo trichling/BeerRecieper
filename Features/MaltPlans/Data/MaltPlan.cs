@@ -13,12 +13,16 @@ public class MaltPlan
         TotalWeightKg = totalWeightKg;
     }
 
-    public void AddMalt(string name, double relativeAmount)
+    public void AddMalt(string name, double relativeAmount, double minEbc, double maxEbc)
     {
         if (relativeAmount <= 0)
             throw new ArgumentException("Relative amount must be greater than zero", nameof(relativeAmount));
+        if (minEbc < 0)
+            throw new ArgumentException("Minimum EBC must be non-negative", nameof(minEbc));
+        if (maxEbc < minEbc)
+            throw new ArgumentException("Maximum EBC must be greater than or equal to minimum EBC", nameof(maxEbc));
 
-        _malts.Add(new Malt(name, relativeAmount));
+        _malts.Add(new Malt(name, relativeAmount, minEbc, maxEbc));
     }
 
     public void RemoveMalt(string name)
@@ -35,7 +39,7 @@ public class MaltPlan
         if (maltIndex == -1)
             throw new InvalidOperationException($"Malt '{name}' not found");
 
-        _malts[maltIndex] = new Malt(name, newRelativeAmount);
+        _malts[maltIndex] = _malts[maltIndex] with { RelativeAmount = newRelativeAmount };
     }
 
     public double GetMaltWeightKg(string name)
@@ -45,6 +49,15 @@ public class MaltPlan
 
         var totalRelativeAmount = _malts.Sum(m => m.RelativeAmount);
         return TotalWeightKg * (malt.RelativeAmount / totalRelativeAmount);
+    }
+
+    public double GetMaltPlanAverageEbc()
+    {
+        if (!_malts.Any())
+            return 0;
+
+        var totalRelativeAmount = _malts.Sum(m => m.RelativeAmount);
+        return _malts.Sum(m => (m.RelativeAmount / totalRelativeAmount) * m.AverageEbc);
     }
 
     public void UpdateTotalWeight(double newTotalWeightKg)

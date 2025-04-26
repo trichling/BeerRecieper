@@ -9,10 +9,14 @@ internal static class MaltPlanMapper
         => new(
             maltPlan.Id,
             maltPlan.TotalWeightKg,
+            maltPlan.GetMaltPlanAverageEbc(),
             maltPlan.Malts.Select(m => new MaltResponse(
                 m.Name,
                 m.RelativeAmount,
-                maltPlan.GetMaltWeightKg(m.Name))).ToList());
+                maltPlan.GetMaltWeightKg(m.Name),
+                m.MinEbc,
+                m.MaxEbc,
+                m.AverageEbc)).ToList());
 
     public static IEnumerable<MaltPlanResponse> ToResponse(IEnumerable<MaltPlan> maltPlans)
         => maltPlans.Select(ToResponse);

@@ -15,11 +15,15 @@ public static class AddMaltEndpoint
     {
         try
         {
-            var command = new AddMaltCommand(id, request.MaltName, request.RelativeAmount);
+            var command = new AddMaltCommand(id, request.MaltName, request.RelativeAmount, request.MinEbc, request.MaxEbc);
             var result = await handler.HandleAsync(command);
             return result is null ? Results.NotFound() : Results.Ok(result);
         }
         catch (InvalidOperationException ex)
+        {
+            return Results.BadRequest(ex.Message);
+        }
+        catch (ArgumentException ex)
         {
             return Results.BadRequest(ex.Message);
         }
