@@ -4,5 +4,16 @@
     <Platform Name="x64" />
     <Platform Name="x86" />
   </Configurations>
+  <Folder Name="/Modules/">
+    <Project Path="Modules/Common/Common.csproj" />
+  </Folder>
+  <Folder Name="/Modules/BeerRecipesModule/">
+    <Project Path="Modules/BeerRecipesModule/BeerRecipes.Contracts/BeerRecipes.Contracts.csproj" />
+    <Project Path="Modules/BeerRecipesModule/BeerRecipes/BeerRecipes.csproj" />
+  </Folder>
+  <Folder Name="/Modules/MaltPlansModule/">
+    <Project Path="Modules/MaltPlansModule/MaltPlans.Contracts/MaltPlans.Contracts.csproj" />
+    <Project Path="Modules/MaltPlansModule/MaltPlans/MaltPlans.csproj" />
+  </Folder>
   <Project Path="BeerRecieper.Api/BeerRecieper.Api.csproj" />
 </Solution>

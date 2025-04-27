@@ -12,4 +12,9 @@
     <PackageReference Include="Swashbuckle.AspNetCore" Version="8.1.1" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Modules\BeerRecipesModule\BeerRecipes\BeerRecipes.csproj" />
+    <ProjectReference Include="..\Modules\MaltPlansModule\MaltPlans\MaltPlans.csproj" />
+  </ItemGroup>
+
 </Project>
