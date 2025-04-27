@@ -29,6 +29,11 @@ public static class BeerRecipesModule
         return services;
     }
 
+    public static void RegisterExternalServicesForHttp(this IServiceCollection services)
+    {
+            
+    }
+
     public static void MapBeerRecipeEndpoints(this IEndpointRouteBuilder app)
     {
         var group = app.MapGroup("/beerrecipes").WithTags("Beer Recipes");
