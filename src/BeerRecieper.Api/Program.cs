@@ -8,6 +8,7 @@ builder.Services.AddSwaggerGen(); // Add this line to configure Swagger generati
 builder.Services.AddOpenApi();
 
 builder.Services.AddBeerRecipeServices();
+builder.Services.RegisterExternalServicesForInProcess();
 builder.Services.AddMaltPlanServices();
 
 var app = builder.Build();

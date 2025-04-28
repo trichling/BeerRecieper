@@ -36,7 +36,8 @@ public static class MaltPlansModule
 
         group.MapGet("/", ([FromServices] IHandler<Unit, IEnumerable<MaltPlanResponse>> handler) =>
             GetAllMaltPlansEndpoint.Handle(handler))
-            .WithName("GetAllMaltPlans");
+            .WithName("GetAllMaltPlans")
+            .WithMetadata(new EndpointHandlerMetadata(typeof(GetAllMaltPlansEndpoint)));
 
         group.MapGet("/{id}", ([FromRoute] Guid id, [FromServices] IHandler<GetMaltPlanByIdCommand, MaltPlanResponse?> handler) =>
             GetMaltPlanByIdEndpoint.Handle(id, handler))

@@ -1,6 +1,7 @@
 using BeerRecipes.Contracts;
 using Common;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Routing;
 
 namespace BeerRecipes.Endpoints;
 
