@@ -80,7 +80,7 @@ public static class BeerRecipesModule
 
     public static void RegisterExternalServicesForInProcess(this IServiceCollection services)
     {
-        services.AddSingleton<IMaltPlanHttpApi, InProcessMaltPlanHttpApi>();
+        services.AddTransient<IMaltPlanHttpApi, InProcessMaltPlanHttpApi>();
     }
 
     public static void MapBeerRecipeEndpoints(this IEndpointRouteBuilder app)
@@ -178,107 +178,95 @@ public static class BeerRecipesModule
             .WithMetadata(new EndpointHandlerMetadata(typeof(UpdateMaltTotalWeightInKgEndpoint)));
     }
 
-    private class InProcessMaltPlanHttpApi : IMaltPlanHttpApi
+}
+
+public class InProcessMaltPlanHttpApi : IMaltPlanHttpApi
+{
+    private readonly IEndpointInvoker endpointInvoker;
+
+    public InProcessMaltPlanHttpApi(IEndpointInvoker endpointInvoker)
     {
-        private readonly IEnumerable<EndpointDataSource> endpointDataSources;
+        this.endpointInvoker = endpointInvoker;
+    }
 
-        public InProcessMaltPlanHttpApi(IEnumerable<EndpointDataSource> endpointDataSources)
+
+    public async Task<IEnumerable<MaltPlanResponse>> GetAllMaltPlansAsync()
+    {
+        // Get all custom attributes
+        var attributes =
+            typeof(IMaltPlanHttpApi)
+                .GetMethod("GetAllMaltPlansAsync")
+                ?.GetCustomAttributes(true)
+            ?? [];
+
+        var methodAndPath = GetHttpMethodFromAttributes(attributes);
+
+        var result = await endpointInvoker.InvokeEndpointAsync<IEnumerable<MaltPlanResponse>>(
+             methodAndPath.Item1,
+             methodAndPath.Item2
+         );
+
+        return result;
+    }
+
+    private static async Task<T> InvokeAsyncMethod<T>(
+        MethodInfo method,
+        object instance,
+        params object[] parameters
+    )
+    {
+        var task = method.Invoke(instance, parameters) as Task<T>;
+
+        if (task == null)
         {
-            this.endpointDataSources = endpointDataSources;
-        }
-
-        public async Task<IEnumerable<MaltPlanResponse>> GetAllMaltPlansAsync()
-        {
-            // Get all custom attributes
-            var attributes =
-                typeof(IMaltPlanHttpApi)
-                    .GetMethod("GetAllMaltPlansAsync")
-                    ?.GetCustomAttributes(true)
-                ?? [];
-
-            var methodAndPath = GetHttpMethodFromAttributes(attributes);
-
-            // find endpoint based on method and path
-            var endpoint = endpointDataSources
-                .SelectMany(x => x.Endpoints)
-                .Cast<RouteEndpoint>()
-                .Where(x =>
-                    x.Metadata.GetMetadata<HttpMethodMetadata>()
-                        ?.HttpMethods.Contains(methodAndPath.Item1) == true
-                    && x.RoutePattern.RawText == methodAndPath.Item2
-                )
-                .FirstOrDefault();
-
-            var handlerType = endpoint.Metadata.GetMetadata<EndpointHandlerMetadata>()?.HandlerType;
-
-            var handler = Activator.CreateInstance(handlerType);
-            var result = await InvokeAsyncMethod<IEnumerable<MaltPlanResponse>>(
-                handlerType.GetMethod("Handle"),
-                handler,
-                MethodBase.GetCurrentMethod().GetParameters()
+            throw new InvalidOperationException(
+                $"Method did not return expected Task<{typeof(T).Name}>"
             );
-
-            return result;
         }
 
-        private static async Task<T> InvokeAsyncMethod<T>(
-            MethodInfo method,
-            object instance,
-            params object[] parameters
-        )
-        {
-            var task = method.Invoke(instance, parameters) as Task<T>;
+        return await task;
+    }
 
-            if (task == null)
+    private (string, string) GetHttpMethodFromAttributes(IEnumerable<object> attributes)
+    {
+        // loop thorugh the attributes and find the one that is a RestEase attribute
+        foreach (var attribute in attributes)
+        {
+            if (attribute is not RequestAttributeBase)
             {
-                throw new InvalidOperationException(
-                    $"Method did not return expected Task<{typeof(T).Name}>"
-                );
+                continue;
             }
+            var requesAtAttribute = (RequestAttributeBase)attribute;
+            var method = requesAtAttribute.Method.ToString();
+            var path = requesAtAttribute.Path ?? string.Empty;
 
-            return await task;
+            return (method, path);
         }
 
-        private (string, string) GetHttpMethodFromAttributes(IEnumerable<object> attributes)
-        {
-            // loop thorugh the attributes and find the one that is a RestEase attribute
-            foreach (var attribute in attributes)
-            {
-                if (attribute is not RequestAttributeBase)
-                {
-                    continue;
-                }
-                var requesAtAttribute = (RequestAttributeBase)attribute;
-                var method = requesAtAttribute.Method.ToString();
-                var path = requesAtAttribute.Path ?? string.Empty;
+        throw new NotImplementedException("No RestEase attribute found");
+    }
 
-                return (method, path);
-            }
+    public Task<MaltPlanResponse> GetMaltPlanByIdAsync(Guid id)
+    {
+        throw new NotImplementedException();
+    }
 
-            throw new NotImplementedException("No RestEase attribute found");
-        }
+    public Task<MaltPlanResponse> CreateMaltPlanAsync(CreateMaltPlanRequest request)
+    {
+        throw new NotImplementedException();
+    }
 
-        public Task<MaltPlanResponse> GetMaltPlanByIdAsync(Guid id)
-        {
-            throw new NotImplementedException();
-        }
+    public Task<MaltPlanResponse> UpdateMaltPlanWeightAsync(
+        Guid id,
+        UpdateMaltPlanWeightRequest request
+    )
+    {
+        throw new NotImplementedException();
+    }
 
-        public Task<MaltPlanResponse> CreateMaltPlanAsync(CreateMaltPlanRequest request)
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task<MaltPlanResponse> UpdateMaltPlanWeightAsync(
-            Guid id,
-            UpdateMaltPlanWeightRequest request
-        )
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task DeleteMaltPlanAsync(Guid id)
-        {
-            throw new NotImplementedException();
-        }
+    public Task DeleteMaltPlanAsync(Guid id)
+    {
+        throw new NotImplementedException();
     }
 }
+
