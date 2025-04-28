@@ -4,12 +4,14 @@ using BeerRecipes.Contracts.Requests;
 using BeerRecipes.Data;
 using BeerRecipes.Endpoints;
 using BeerRecipes.Handlers;
+using MaltPlans.Contracts;
 using Common;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
+using MaltPlans.Contracts.Api;
 
 namespace BeerRecipes;
 
@@ -31,9 +33,18 @@ public static class BeerRecipesModule
 
     public static void RegisterExternalServicesForHttp(this IServiceCollection services)
     {
-            
+        services.AddHttpClient("MaltPlans", client =>
+        {
+            client.BaseAddress = new Uri("http://localhost:5001");
+            client.DefaultRequestHeaders.Accept.Clear();
+            client.DefaultRequestHeaders.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
+        });
+        // let IMaltPlanHtppApi use this http client
+        services.AddScoped<IMaltPlanHttpApi>(services =>
+        {
+            throw new NotImplementedException("IMaltPlanHttpApi is not implemented yet");
+        });
     }
-
     public static void MapBeerRecipeEndpoints(this IEndpointRouteBuilder app)
     {
         var group = app.MapGroup("/beerrecipes").WithTags("Beer Recipes");
