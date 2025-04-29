@@ -18,7 +18,7 @@ public class DeleteBeerRecipeHandler : IHandler<DeleteBeerRecipeCommand, Unit>
 
     public async Task<Unit> HandleAsync(DeleteBeerRecipeCommand command)
     {
-        var result = await _maltPlanHttpApi.GetAllMaltPlansAsync();
+        var result1 = await _maltPlanHttpApi.GetMaltPlanByIdAsync(Guid.Parse("f1c29f6d-679d-4176-8c69-42591e5d3b89"));
 
         await _repository.DeleteAsync(command.Id);
         return Unit.Value;

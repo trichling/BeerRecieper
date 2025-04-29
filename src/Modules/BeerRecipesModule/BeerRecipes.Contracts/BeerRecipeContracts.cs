@@ -1,3 +1,9 @@
+using System.Text.Json.Serialization;
+
 namespace BeerRecipes.Contracts;
 
-public record BeerRecipeResponse(Guid Id, string Name, string Description, Guid? MaltPlanId);
+public record BeerRecipeResponse(
+    [property: JsonPropertyName("id")] Guid Id,
+    [property: JsonPropertyName("name")] string Name,
+    [property: JsonPropertyName("description")] string Description,
+    [property: JsonPropertyName("maltPlanId")] Guid? MaltPlanId);

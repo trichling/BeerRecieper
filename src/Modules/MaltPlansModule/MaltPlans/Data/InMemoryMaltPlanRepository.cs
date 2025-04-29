@@ -2,7 +2,7 @@ namespace MaltPlans.Data;
 
 public class InMemoryMaltPlanRepository : IMaltPlanRepository
 {
-    private readonly Dictionary<Guid, MaltPlan> _maltPlans = new();
+    private readonly Dictionary<Guid, MaltPlan> _maltPlans = GetMaltPlans();
 
     public Task<IEnumerable<MaltPlan>> GetAllAsync()
     {
@@ -25,4 +25,11 @@ public class InMemoryMaltPlanRepository : IMaltPlanRepository
         _maltPlans[maltPlan.Id] = maltPlan;
         return Task.CompletedTask;
     }
+
+    private static Dictionary<Guid, MaltPlan> GetMaltPlans() =>
+        new Dictionary<Guid, MaltPlan>
+        {
+            { Guid.Parse("f1c29f6d-679d-4176-8c69-42591e5d3b89"), new MaltPlan(20.0) },
+            { Guid.Parse("a2b5e9c8-7d34-4f12-b12e-890abc123def"), new MaltPlan(25.0) },
+        };
 }

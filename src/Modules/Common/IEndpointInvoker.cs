@@ -13,7 +13,8 @@ public interface IEndpointInvoker
         string httpMethod,
         string path,
         IDictionary<string, object>? routeValues = null,
-        object? requestBody = null);
+        object? requestBody = null
+    );
 }
 
 public class InProcessEndpointInvoker : IEndpointInvoker
@@ -23,48 +24,60 @@ public class InProcessEndpointInvoker : IEndpointInvoker
 
     public InProcessEndpointInvoker(
         IServiceProvider serviceProvider,
-        EndpointDataSource endpointDataSource)
+        EndpointDataSource endpointDataSource
+    )
     {
         _serviceProvider = serviceProvider;
         _endpointDataSource = endpointDataSource;
-
-    }
-
-    private Endpoint? FindEndpoint(HttpContext context)
-    {
-        foreach (var endpoint in _endpointDataSource.Endpoints)
-        {
-            if (endpoint is RouteEndpoint routeEndpoint)
-            {
-                var values = new RouteValueDictionary();
-                var matcher = new TemplateMatcher(
-                    TemplateParser.Parse(routeEndpoint.RoutePattern.RawText ?? string.Empty),
-                    new RouteValueDictionary());
-                
-                if (matcher.TryMatch(context.Request.Path, values))
-                {
-                    foreach (var value in values)
-                    {
-                        context.Request.RouteValues[value.Key] = value.Value;
-                    }
-                    return endpoint;
-                }
-            }
-        }
-        return null;
     }
 
     public async Task<TResponse> InvokeEndpointAsync<TResponse>(
         string httpMethod,
         string path,
         IDictionary<string, object>? routeValues = null,
-        object? requestBody = null)
+        object? requestBody = null
+    )
     {
         // Create HTTP context
-        var context = new DefaultHttpContext
+        var context = CreateHttpContext(httpMethod, path, routeValues, requestBody);
+
+        // Create response body stream
+        context.Response.Body = new MemoryStream();
+
+        // Execute the endpoint pipeline
+        var endpoint = FindEndpoint(context);
+        if (endpoint == null || endpoint.RequestDelegate == null)
+            throw new InvalidOperationException($"No endpoint found for {httpMethod} {path}");
+
+        await endpoint.RequestDelegate(context);
+
+        // Read response
+        context.Response.Body.Position = 0;
+        using var streamReader = new StreamReader(context.Response.Body);
+        var jsonResponse = await streamReader.ReadToEndAsync();
+
+        if (
+            context.Response.StatusCode != StatusCodes.Status200OK
+            && context.Response.StatusCode != StatusCodes.Status201Created
+        )
         {
-            RequestServices = _serviceProvider
-        };
+            throw new InvalidOperationException(
+                $"Request failed with status code {context.Response.StatusCode}"
+            );
+        }
+
+        return JsonSerializer.Deserialize<TResponse>(jsonResponse)
+            ?? throw new InvalidOperationException("Response was null");
+    }
+
+    private HttpContext CreateHttpContext(
+        string httpMethod,
+        string path,
+        IDictionary<string, object>? routeValues,
+        object? requestBody
+    )
+    {
+        var context = new DefaultHttpContext { RequestServices = _serviceProvider };
 
         // Setup the request
         context.Request.Method = httpMethod;
@@ -90,29 +103,27 @@ public class InProcessEndpointInvoker : IEndpointInvoker
             context.Request.ContentType = "application/json";
         }
 
-        // Create response body stream
-        var responseStream = new MemoryStream();
-        context.Response.Body = responseStream;
+        return context;
+    }
 
-        // Execute the endpoint pipeline
-        var endpoint = FindEndpoint(context);
-        if (endpoint == null || endpoint.RequestDelegate == null)
-            throw new InvalidOperationException($"No endpoint found for {httpMethod} {path}");
-            
-        await endpoint.RequestDelegate(context);
-
-        // Read response
-        responseStream.Position = 0;
-        using var streamReader = new StreamReader(responseStream);
-        var jsonResponse = await streamReader.ReadToEndAsync();
-
-        if (context.Response.StatusCode != StatusCodes.Status200OK &&
-            context.Response.StatusCode != StatusCodes.Status201Created)
+    private Endpoint? FindEndpoint(HttpContext context)
+    {
+        foreach (var endpoint in _endpointDataSource.Endpoints)
         {
-            throw new InvalidOperationException($"Request failed with status code {context.Response.StatusCode}");
-        }
+            if (endpoint is RouteEndpoint routeEndpoint)
+            {
+                var values = new RouteValueDictionary();
+                var matcher = new TemplateMatcher(
+                    TemplateParser.Parse(routeEndpoint.RoutePattern.RawText ?? string.Empty),
+                    new RouteValueDictionary()
+                );
 
-        return JsonSerializer.Deserialize<TResponse>(jsonResponse)
-            ?? throw new InvalidOperationException("Response was null");
+                if (matcher.TryMatch(context.Request.Path, values))
+                {
+                    return endpoint;
+                }
+            }
+        }
+        return null;
     }
 }

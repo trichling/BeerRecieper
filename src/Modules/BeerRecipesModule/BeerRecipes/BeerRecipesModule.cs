@@ -1,4 +1,5 @@
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using BeerRecipes.Contracts;
 using BeerRecipes.Contracts.Commands;
 using BeerRecipes.Contracts.Requests;
@@ -90,9 +91,8 @@ public static class BeerRecipesModule
         group
             .MapGet(
                 "/",
-                (
-                    [FromServices] IHandler<Unit, IEnumerable<BeerRecipeResponse>> handler
-                ) => GetAllRecipesEndpoint.Handle(handler)
+                ([FromServices] IHandler<Unit, IEnumerable<BeerRecipeResponse>> handler) =>
+                    GetAllRecipesEndpoint.Handle(handler)
             )
             .WithName("GetAllRecipes")
             .WithMetadata(new EndpointHandlerMetadata(typeof(GetAllRecipesEndpoint)));
@@ -177,7 +177,6 @@ public static class BeerRecipesModule
             .WithName("UpdateMaltPlanTotalWeight")
             .WithMetadata(new EndpointHandlerMetadata(typeof(UpdateMaltTotalWeightInKgEndpoint)));
     }
-
 }
 
 public class InProcessMaltPlanHttpApi : IMaltPlanHttpApi
@@ -189,66 +188,29 @@ public class InProcessMaltPlanHttpApi : IMaltPlanHttpApi
         this.endpointInvoker = endpointInvoker;
     }
 
-
     public async Task<IEnumerable<MaltPlanResponse>> GetAllMaltPlansAsync()
     {
-        // Get all custom attributes
-        var attributes =
-            typeof(IMaltPlanHttpApi)
-                .GetMethod("GetAllMaltPlansAsync")
-                ?.GetCustomAttributes(true)
-            ?? [];
-
-        var methodAndPath = GetHttpMethodFromAttributes(attributes);
+        var methodAndPath = GetHttpMethodFromAttributes();
 
         var result = await endpointInvoker.InvokeEndpointAsync<IEnumerable<MaltPlanResponse>>(
-             methodAndPath.Item1,
-             methodAndPath.Item2
-         );
+            methodAndPath.Item1,
+            methodAndPath.Item2
+        );
 
         return result;
     }
 
-    private static async Task<T> InvokeAsyncMethod<T>(
-        MethodInfo method,
-        object instance,
-        params object[] parameters
-    )
+    public async Task<MaltPlanResponse> GetMaltPlanByIdAsync(Guid id)
     {
-        var task = method.Invoke(instance, parameters) as Task<T>;
+        var methodAndPath = GetHttpMethodFromAttributes();
 
-        if (task == null)
-        {
-            throw new InvalidOperationException(
-                $"Method did not return expected Task<{typeof(T).Name}>"
-            );
-        }
+        var result = await endpointInvoker.InvokeEndpointAsync<MaltPlanResponse>(
+            methodAndPath.Item1,
+            methodAndPath.Item2,
+            new Dictionary<string, object> { { "id", id.ToString() } }
+        );
 
-        return await task;
-    }
-
-    private (string, string) GetHttpMethodFromAttributes(IEnumerable<object> attributes)
-    {
-        // loop thorugh the attributes and find the one that is a RestEase attribute
-        foreach (var attribute in attributes)
-        {
-            if (attribute is not RequestAttributeBase)
-            {
-                continue;
-            }
-            var requesAtAttribute = (RequestAttributeBase)attribute;
-            var method = requesAtAttribute.Method.ToString();
-            var path = requesAtAttribute.Path ?? string.Empty;
-
-            return (method, path);
-        }
-
-        throw new NotImplementedException("No RestEase attribute found");
-    }
-
-    public Task<MaltPlanResponse> GetMaltPlanByIdAsync(Guid id)
-    {
-        throw new NotImplementedException();
+        return result;
     }
 
     public Task<MaltPlanResponse> CreateMaltPlanAsync(CreateMaltPlanRequest request)
@@ -268,5 +230,27 @@ public class InProcessMaltPlanHttpApi : IMaltPlanHttpApi
     {
         throw new NotImplementedException();
     }
-}
 
+    private (string, string) GetHttpMethodFromAttributes([CallerMemberName] string callerName = "")
+    {
+        // Get all interfaces implemented by this class
+        var interfaces = GetType().GetInterfaces();
+
+        foreach (var interfaceType in interfaces)
+        {
+            var methodInfo = interfaceType.GetMethod(callerName);
+            if (methodInfo == null) continue;
+
+            var attributes = methodInfo.GetCustomAttributes(true) ?? [];
+
+            // Find RestEase attribute
+            foreach (var attribute in attributes)
+            {
+                if (attribute is not RequestAttributeBase requestAttr) continue;
+                return (requestAttr.Method.ToString(), requestAttr.Path ?? string.Empty);
+            }
+        }
+
+        throw new NotImplementedException("No RestEase attribute found for method " + callerName);
+    }
+}
