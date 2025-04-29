@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.AspNetCore.Routing.Patterns;
 using Microsoft.AspNetCore.Routing.Template;
+using Microsoft.Extensions.Primitives;
 
 public interface IEndpointInvoker
 {
@@ -13,6 +14,7 @@ public interface IEndpointInvoker
         string httpMethod,
         string path,
         IDictionary<string, object>? routeValues = null,
+        IDictionary<string, object>? queryValues = null,
         object? requestBody = null
     );
 }
@@ -35,14 +37,12 @@ public class InProcessEndpointInvoker : IEndpointInvoker
         string httpMethod,
         string path,
         IDictionary<string, object>? routeValues = null,
+        IDictionary<string, object>? queryValues = null,
         object? requestBody = null
     )
     {
         // Create HTTP context
-        var context = CreateHttpContext(httpMethod, path, routeValues, requestBody);
-
-        // Create response body stream
-        context.Response.Body = new MemoryStream();
+        var context = CreateHttpContext(httpMethod, path, routeValues, queryValues, requestBody);
 
         // Execute the endpoint pipeline
         var endpoint = FindEndpoint(context);
@@ -74,6 +74,7 @@ public class InProcessEndpointInvoker : IEndpointInvoker
         string httpMethod,
         string path,
         IDictionary<string, object>? routeValues,
+        IDictionary<string, object>? queryValues,
         object? requestBody
     )
     {
@@ -94,6 +95,17 @@ public class InProcessEndpointInvoker : IEndpointInvoker
             context.Request.RouteValues = routeValueDict;
         }
 
+        // Add query collection to request
+        if (queryValues != null)
+        {
+            var queryDict = new Dictionary<string, StringValues>();
+            foreach (var kvp in queryValues)
+            {
+                queryDict[kvp.Key] = kvp.Value.ToString() ?? string.Empty;
+            }
+            context.Request.Query = new QueryCollection(queryDict);
+        }
+
         // Add request body if present
         if (requestBody != null)
         {
@@ -102,6 +114,9 @@ public class InProcessEndpointInvoker : IEndpointInvoker
             context.Request.Body = new MemoryStream(bytes);
             context.Request.ContentType = "application/json";
         }
+
+        // Create response body stream
+        context.Response.Body = new MemoryStream();
 
         return context;
     }

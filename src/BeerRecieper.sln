@@ -21,6 +21,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MaltPlans", "Modules\MaltPl
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MaltPlans.Contracts", "Modules\MaltPlansModule\MaltPlans.Contracts\MaltPlans.Contracts.csproj", "{B1A75DB1-43BF-41D9-902D-7C2EA5DAEA10}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BeerRecieper.Tests", "BeerRecieper.Tests\BeerRecieper.Tests.csproj", "{0926CE3A-6A44-48CF-82E5-C97F5F40FC36}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -103,6 +105,18 @@ Global
 		{B1A75DB1-43BF-41D9-902D-7C2EA5DAEA10}.Release|x64.Build.0 = Release|Any CPU
 		{B1A75DB1-43BF-41D9-902D-7C2EA5DAEA10}.Release|x86.ActiveCfg = Release|Any CPU
 		{B1A75DB1-43BF-41D9-902D-7C2EA5DAEA10}.Release|x86.Build.0 = Release|Any CPU
+		{0926CE3A-6A44-48CF-82E5-C97F5F40FC36}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0926CE3A-6A44-48CF-82E5-C97F5F40FC36}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0926CE3A-6A44-48CF-82E5-C97F5F40FC36}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{0926CE3A-6A44-48CF-82E5-C97F5F40FC36}.Debug|x64.Build.0 = Debug|Any CPU
+		{0926CE3A-6A44-48CF-82E5-C97F5F40FC36}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{0926CE3A-6A44-48CF-82E5-C97F5F40FC36}.Debug|x86.Build.0 = Debug|Any CPU
+		{0926CE3A-6A44-48CF-82E5-C97F5F40FC36}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0926CE3A-6A44-48CF-82E5-C97F5F40FC36}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0926CE3A-6A44-48CF-82E5-C97F5F40FC36}.Release|x64.ActiveCfg = Release|Any CPU
+		{0926CE3A-6A44-48CF-82E5-C97F5F40FC36}.Release|x64.Build.0 = Release|Any CPU
+		{0926CE3A-6A44-48CF-82E5-C97F5F40FC36}.Release|x86.ActiveCfg = Release|Any CPU
+		{0926CE3A-6A44-48CF-82E5-C97F5F40FC36}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

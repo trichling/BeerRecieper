@@ -63,8 +63,9 @@ public static class MaltPlansModule
                 "/{id}",
                 (
                     [FromRoute] Guid id,
+                    [FromQuery] bool includeMalt,
                     [FromServices] IHandler<GetMaltPlanByIdCommand, MaltPlanResponse?> handler
-                ) => GetMaltPlanByIdEndpoint.Handle(id, handler)
+                ) => GetMaltPlanByIdEndpoint.Handle(id, includeMalt, handler)
             )
             .WithName("GetMaltPlanById");
 

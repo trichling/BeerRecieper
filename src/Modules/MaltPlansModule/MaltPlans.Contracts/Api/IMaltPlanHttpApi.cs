@@ -9,7 +9,7 @@ public interface IMaltPlanHttpApi
     Task<IEnumerable<MaltPlanResponse>> GetAllMaltPlansAsync();
 
     [Get("/maltplans/{id}")]
-    Task<MaltPlanResponse> GetMaltPlanByIdAsync(Guid id);
+    Task<MaltPlanResponse> GetMaltPlanByIdAsync([Path] Guid id, [Query] bool includeMalt = false);
 
     [Post("/maltplans")]
     Task<MaltPlanResponse> CreateMaltPlanAsync(CreateMaltPlanRequest request);

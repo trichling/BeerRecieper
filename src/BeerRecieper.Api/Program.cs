@@ -11,17 +11,12 @@ builder.Services.AddOpenApi();
 builder.Services.AddScoped<IEndpointInvoker>(sp =>
 {
     var endpointDataSource = sp.GetRequiredService<EndpointDataSource>();
-    return new InProcessEndpointInvoker(
-        sp,
-        endpointDataSource);
+    return new InProcessEndpointInvoker(sp, endpointDataSource);
 });
 
 builder.Services.AddBeerRecipeServices();
 builder.Services.RegisterExternalServicesForInProcess();
 builder.Services.AddMaltPlanServices();
-
-
-
 
 var app = builder.Build();
 

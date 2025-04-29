@@ -200,7 +200,7 @@ public class InProcessMaltPlanHttpApi : IMaltPlanHttpApi
         return result;
     }
 
-    public async Task<MaltPlanResponse> GetMaltPlanByIdAsync(Guid id)
+    public async Task<MaltPlanResponse> GetMaltPlanByIdAsync(Guid id, bool includeMalt = false)
     {
         var methodAndPath = GetHttpMethodFromAttributes();
 
