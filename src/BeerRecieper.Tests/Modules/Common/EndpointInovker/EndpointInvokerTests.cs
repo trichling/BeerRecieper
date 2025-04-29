@@ -3,14 +3,42 @@ using Common;
 using MaltPlans.Contracts;
 using MaltPlans.Contracts.Api;
 using MaltPlans.Contracts.Requests;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Routing;
+using Microsoft.Extensions.DependencyInjection;
 using RestEase;
 
 namespace BeerRecieper.Tests.Modules.Common.EndpointInovker;
 
 [TestClass]
-public class EndpointInvokerTests { 
+public class EndpointInvokerTests
+{
+    private WebApplication _app;
+    private object _endpointDataSource;
 
-    
+    [TestInitialize]
+    public async Task Setup()
+    {
+        _app = await TestProgram.CreateAppAsync();
+
+        // Get endpoint data source after app is built
+        _endpointDataSource = _app.Services.GetRequiredService<EndpointDataSource>();
+    }
+
+    [TestMethod]
+    public async Task GetAllMaltPlans_ShouldReturnListOfMaltPlans()
+    {
+        // Arrange
+        var maltPlanApi = _app.Services.GetRequiredService<IMaltPlanHttpApi>();
+        
+        // Act
+        var result = await maltPlanApi.GetAllMaltPlansAsync();
+
+        // Assert
+        Assert.IsNotNull(result);
+        Assert.IsInstanceOfType(result, typeof(IEnumerable<MaltPlanResponse>));
+    }
+
 }
 
 public class InProcessMaltPlanHttpApi : IMaltPlanHttpApi
