@@ -10,29 +10,33 @@ namespace BeerRecieper.Tests;
 
 public class TestProgram
 {
-    public static async Task<WebApplication> CreateAppAsync()
+    public static async Task<WebApplication> CreateAppAsync(Action<IServiceCollection>? configureServices = null, Action<WebApplication> mapEndpoints = null)
+
     {
+        // Create a new WebApplicationBuilder
         var builder = WebApplication.CreateBuilder();
-
-        // Add services required for testing
+        
         builder.Services.AddEndpointsApiExplorer();
-        builder.Services.AddMaltPlanServices();
-
-        builder.Services.AddScoped<IEndpointInvoker>(sp =>
+        if (configureServices != null)
         {
-            var endpointDataSource = sp.GetRequiredService<EndpointDataSource>();
-            return new InProcessEndpointInvoker(sp, endpointDataSource);
-        });
+            // Add any additional services if needed
+            configureServices(builder.Services);
+        }
 
-        builder.Services.AddTransient<IMaltPlanHttpApi, InProcessMaltPlanHttpApi>();
-
+        // Build the app
         var app = builder.Build();
 
+        if (mapEndpoints != null)
+        {
+            // Map any additional endpoints if needed
+            mapEndpoints(app);
+        }
+
         // Map endpoints
-        app.MapMaltPlanEndpoints();
 
         await app.StartAsync();
 
         return app;
     }
+  
 }

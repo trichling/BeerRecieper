@@ -1,5 +1,6 @@
 namespace Common;
 
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
 using Microsoft.AspNetCore.Http;
@@ -10,6 +11,8 @@ using Microsoft.Extensions.Primitives;
 
 public interface IEndpointInvoker
 {
+    MethodCallInfo GetMethodCallInfo<TInterface>(string callerName = "");
+
     Task<TResponse> InvokeEndpointAsync<TResponse>(
         string httpMethod,
         string path,
@@ -31,6 +34,79 @@ public class InProcessEndpointInvoker : IEndpointInvoker
     {
         _serviceProvider = serviceProvider;
         _endpointDataSource = endpointDataSource;
+    }
+
+    public MethodCallInfo GetMethodCallInfo<TInterface>([CallerMemberName] string callerName = "")
+    {
+        var methodCallInfo = new MethodCallInfo();
+        // Get all interfaces implemented by this class
+        var interfaceType = typeof(TInterface);
+
+        var methodInfo = interfaceType.GetMethod(callerName);
+
+        var methodAttributes = methodInfo.GetCustomAttributes(true) ?? [];
+
+        // Find RestEase attribute
+        foreach (var attribute in methodAttributes)
+        {
+            if (!attribute.GetType().GetProperties().Any(p => p.Name == "Method" || p.Name == "Path"))
+                continue;
+
+            dynamic requestAttr = attribute;
+            methodCallInfo.HttpMethod = requestAttr.Method.ToString();
+            methodCallInfo.Path = requestAttr.Path ?? string.Empty;
+        }
+
+        var methodParameters = methodInfo.GetParameters();
+
+        foreach (var parameter in methodParameters)
+        {
+            var parameterAttributes = parameter.GetCustomAttributes(true) ?? [];
+            foreach (var attribute in parameterAttributes)
+            {
+                switch (attribute.GetType().Name)
+                {
+                    case "PathAttribute":
+                        methodCallInfo.Parameters.Add(
+                            new ParameterInfo
+                            {
+                                Name = parameter.Name ?? string.Empty,
+                                ParameterSource = ParameterSource.Path,
+                            }
+                        );
+                        break;
+                    case "QueryAttribute":
+                        methodCallInfo.Parameters.Add(
+                            new ParameterInfo
+                            {
+                                Name = parameter.Name ?? string.Empty,
+                                ParameterSource = ParameterSource.Query,
+                            }
+                        );
+                        break;
+                    case "BodyAttribute":
+                        methodCallInfo.Parameters.Add(
+                            new ParameterInfo
+                            {
+                                Name = "Body" ?? string.Empty,
+                                ParameterSource = ParameterSource.Body,
+                            }
+                        );
+                        break;
+                    case "HeaderAttribute":
+                        methodCallInfo.Parameters.Add(
+                            new ParameterInfo
+                            {
+                                Name = parameter.Name ?? string.Empty,
+                                ParameterSource = ParameterSource.Header,
+                            }
+                        );
+                        break;
+                }
+            }
+        }
+
+        return methodCallInfo;
     }
 
     public async Task<TResponse> InvokeEndpointAsync<TResponse>(
@@ -66,7 +142,9 @@ public class InProcessEndpointInvoker : IEndpointInvoker
             );
         }
 
-        return JsonSerializer.Deserialize<TResponse>(jsonResponse)
+        var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+
+        return JsonSerializer.Deserialize<TResponse>(jsonResponse, options)
             ?? throw new InvalidOperationException("Response was null");
     }
 
@@ -141,4 +219,25 @@ public class InProcessEndpointInvoker : IEndpointInvoker
         }
         return null;
     }
+}
+
+public class MethodCallInfo
+{
+    public string HttpMethod { get; set; } = string.Empty;
+    public string Path { get; set; } = string.Empty;
+    public List<ParameterInfo> Parameters { get; set; } = [];
+}
+
+public class ParameterInfo
+{
+    public string Name { get; set; } = string.Empty;
+    public ParameterSource ParameterSource { get; set; }
+}
+
+public enum ParameterSource
+{
+    Path,
+    Query,
+    Body,
+    Header,
 }

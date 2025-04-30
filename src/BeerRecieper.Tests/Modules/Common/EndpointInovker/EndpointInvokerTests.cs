@@ -1,9 +1,11 @@
 using System.Runtime.CompilerServices;
 using Common;
+using MaltPlans;
 using MaltPlans.Contracts;
 using MaltPlans.Contracts.Api;
 using MaltPlans.Contracts.Requests;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using RestEase;
@@ -13,108 +15,122 @@ namespace BeerRecieper.Tests.Modules.Common.EndpointInovker;
 [TestClass]
 public class EndpointInvokerTests
 {
-    private WebApplication _app;
-    private object _endpointDataSource;
+    private readonly WebApplication _app;
 
-    [TestInitialize]
-    public async Task Setup()
+    public EndpointInvokerTests()
     {
-        _app = await TestProgram.CreateAppAsync();
-
-        // Get endpoint data source after app is built
-        _endpointDataSource = _app.Services.GetRequiredService<EndpointDataSource>();
+        _app = TestProgram
+            .CreateAppAsync(
+                services =>
+                {
+                    services.AddScoped<IEndpointInvoker, InProcessEndpointInvoker>();
+                    services.AddScoped<ITestApi, TestApi>();
+                },
+                app =>
+                {
+                    app.MapGet(
+                            "/getAll",
+                            static () =>
+                                Results.Ok(
+                                    new List<TestResponse>()
+                                    {
+                                        new TestResponse() { Id = "1" },
+                                        new TestResponse() { Id = "2" },
+                                    }
+                                )
+                        )
+                        .WithName("getAll");
+                    app.MapGet(
+                            "/getOne/{id}",
+                            static (string id, bool includeSome = false) =>
+                                Results.Ok(new TestResponse { Id = id, IncludeSome = includeSome })
+                        )
+                        .WithName("getOne");
+                }
+            )
+            .GetAwaiter()
+            .GetResult();
     }
 
     [TestMethod]
     public async Task GetAllMaltPlans_ShouldReturnListOfMaltPlans()
     {
         // Arrange
-        var maltPlanApi = _app.Services.GetRequiredService<IMaltPlanHttpApi>();
-        
+        var maltPlanApi = _app.Services.GetRequiredService<ITestApi>();
+
         // Act
-        var result = await maltPlanApi.GetAllMaltPlansAsync();
+        var result = await maltPlanApi.GetAllAsync();
 
         // Assert
         Assert.IsNotNull(result);
-        Assert.IsInstanceOfType(result, typeof(IEnumerable<MaltPlanResponse>));
+        Assert.IsInstanceOfType(result, typeof(IEnumerable<TestResponse>));
     }
 
+    [TestMethod]
+    public async Task GetMaltPlanByIdAsync_ShouldReturnMaltPlans()
+    {
+        // Arrange
+        var maltPlanApi = _app.Services.GetRequiredService<ITestApi>();
+
+        // Act
+        var result = await maltPlanApi.GetOneAsync(3, true);
+
+        // Assert
+        Assert.IsNotNull(result);
+        Assert.IsInstanceOfType(result, typeof(TestResponse));
+        Assert.AreEqual("3", result.Id);
+        Assert.IsTrue(result.IncludeSome);
+    }
 }
 
-public class InProcessMaltPlanHttpApi : IMaltPlanHttpApi
+public interface ITestApi
+{
+    [Get("/getAll")]
+    Task<IEnumerable<TestResponse>> GetAllAsync();
+
+    [Get("/getOne/{id}")]
+    Task<TestResponse> GetOneAsync([Path] int id, [Query] bool includeSome = false);
+}
+
+public class TestResponse
+{
+    public string Id { get; set; }
+
+    public bool IncludeSome { get; set; } = false;
+}
+
+public class TestApi : ITestApi
 {
     private readonly IEndpointInvoker endpointInvoker;
 
-    public InProcessMaltPlanHttpApi(IEndpointInvoker endpointInvoker)
+    public TestApi(IEndpointInvoker endpointInvoker)
     {
         this.endpointInvoker = endpointInvoker;
     }
 
-    public async Task<IEnumerable<MaltPlanResponse>> GetAllMaltPlansAsync()
+    public async Task<IEnumerable<TestResponse>> GetAllAsync()
     {
-        var methodAndPath = GetHttpMethodFromAttributes();
+        var methodCallInfo = endpointInvoker.GetMethodCallInfo<ITestApi>();
 
-        var result = await endpointInvoker.InvokeEndpointAsync<IEnumerable<MaltPlanResponse>>(
-            methodAndPath.Item1,
-            methodAndPath.Item2
+        var result = await endpointInvoker.InvokeEndpointAsync<IEnumerable<TestResponse>>(
+            methodCallInfo.HttpMethod,
+            methodCallInfo.Path
         );
 
         return result;
     }
 
-    public async Task<MaltPlanResponse> GetMaltPlanByIdAsync(Guid id, bool includeMalt = false)
+    public async Task<TestResponse> GetOneAsync(int id, bool includeSome = false)
     {
-        var methodAndPath = GetHttpMethodFromAttributes();
+        var methodCallInfo = endpointInvoker.GetMethodCallInfo<ITestApi>(nameof(GetOneAsync));
 
-        var result = await endpointInvoker.InvokeEndpointAsync<MaltPlanResponse>(
-            methodAndPath.Item1,
-            methodAndPath.Item2,
-            new Dictionary<string, object> { { "id", id.ToString() } }
+        var result = await endpointInvoker.InvokeEndpointAsync<TestResponse>(
+            methodCallInfo.HttpMethod,
+            methodCallInfo.Path,
+            new Dictionary<string, object> { { "id", id.ToString() } },
+            new Dictionary<string, object> { { "includeSome", includeSome.ToString() } }
         );
 
         return result;
-    }
-
-    public Task<MaltPlanResponse> CreateMaltPlanAsync(CreateMaltPlanRequest request)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<MaltPlanResponse> UpdateMaltPlanWeightAsync(
-        Guid id,
-        UpdateMaltPlanWeightRequest request
-    )
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task DeleteMaltPlanAsync(Guid id)
-    {
-        throw new NotImplementedException();
-    }
-
-    private (string, string) GetHttpMethodFromAttributes([CallerMemberName] string callerName = "")
-    {
-        // Get all interfaces implemented by this class
-        var interfaces = this.GetType().GetInterfaces();
-
-        foreach (var interfaceType in interfaces)
-        {
-            var methodInfo = interfaceType.GetMethod(callerName);
-            if (methodInfo == null)
-                continue;
-
-            var attributes = methodInfo.GetCustomAttributes(true) ?? [];
-
-            // Find RestEase attribute
-            foreach (var attribute in attributes)
-            {
-                if (attribute is not RequestAttributeBase requestAttr)
-                    continue;
-                return (requestAttr.Method.ToString(), requestAttr.Path ?? string.Empty);
-            }
-        }
-
-        throw new NotImplementedException("No RestEase attribute found for method " + callerName);
     }
 }

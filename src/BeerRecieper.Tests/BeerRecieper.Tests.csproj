@@ -23,7 +23,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\BeerRecieper.Api\BeerRecieper.Api.csproj" />
-    <ProjectReference Include="..\Modules\Common\Common.csproj" />
+    <ProjectReference Include="..\Modules\Common\Common.csproj"  />
+    <ProjectReference Include="..\Modules\ApiClientGenerator\ApiClientGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="true" />
     <ProjectReference Include="..\Modules\MaltPlansModule\MaltPlans.Contracts\MaltPlans.Contracts.csproj" />
     <ProjectReference Include="..\Modules\MaltPlansModule\MaltPlans\MaltPlans.csproj" />
   </ItemGroup>

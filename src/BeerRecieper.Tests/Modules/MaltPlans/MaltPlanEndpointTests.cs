@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using System.Threading.Tasks;
+using MaltPlans;
+using Common;
 
 namespace BeerRecieper.Tests.Modules.MaltPlans;
 
@@ -16,7 +18,16 @@ public class MaltPlanEndpointTests : IDisposable
     [TestInitialize]
     public async Task Setup()
     {
-        _app = await TestProgram.CreateAppAsync();
+        _app = await TestProgram.CreateAppAsync(
+            services => 
+            {
+                services.AddMaltPlanServices();
+            },
+            app =>
+            {
+                app.MapMaltPlanEndpoints();
+            }
+        );
 
         // Get endpoint data source after app is built
         _endpointDataSource = _app.Services.GetRequiredService<EndpointDataSource>();
