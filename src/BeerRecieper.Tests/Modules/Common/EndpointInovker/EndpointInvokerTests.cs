@@ -1,14 +1,7 @@
-using System.Runtime.CompilerServices;
 using Common;
-using MaltPlans;
-using MaltPlans.Contracts;
-using MaltPlans.Contracts.Api;
-using MaltPlans.Contracts.Requests;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
-using RestEase;
 
 namespace BeerRecieper.Tests.Modules.Common.EndpointInovker;
 
@@ -24,7 +17,6 @@ public class EndpointInvokerTests
                 services =>
                 {
                     services.AddScoped<IEndpointInvoker, InProcessEndpointInvoker>();
-                    services.AddScoped<ITestApi, TestApi>();
                 },
                 app =>
                 {
@@ -34,8 +26,8 @@ public class EndpointInvokerTests
                                 Results.Ok(
                                     new List<TestResponse>()
                                     {
-                                        new TestResponse() { Id = "1" },
-                                        new TestResponse() { Id = "2" },
+                                        new() { Id = "1" },
+                                        new() { Id = "2" },
                                     }
                                 )
                         )
@@ -56,10 +48,11 @@ public class EndpointInvokerTests
     public async Task GetAllMaltPlans_ShouldReturnListOfMaltPlans()
     {
         // Arrange
-        var maltPlanApi = _app.Services.GetRequiredService<ITestApi>();
-
-        // Act
-        var result = await maltPlanApi.GetAllAsync();
+        var endpointInvoker = _app.Services.GetRequiredService<IEndpointInvoker>();
+        var result = await endpointInvoker.InvokeEndpointAsync<IEnumerable<TestResponse>>(
+            "GET",
+            "/getAll"
+        );
 
         // Assert
         Assert.IsNotNull(result);
@@ -70,10 +63,13 @@ public class EndpointInvokerTests
     public async Task GetMaltPlanByIdAsync_ShouldReturnMaltPlans()
     {
         // Arrange
-        var maltPlanApi = _app.Services.GetRequiredService<ITestApi>();
-
-        // Act
-        var result = await maltPlanApi.GetOneAsync(3, true);
+        var endpointInvoker = _app.Services.GetRequiredService<IEndpointInvoker>();
+        var result = await endpointInvoker.InvokeEndpointAsync<TestResponse>(
+            "GET",
+            "/getOne/3",
+            new Dictionary<string, object> { { "id", "3" } },
+            new Dictionary<string, object> { { "includeSome", "true" } }
+        );
 
         // Assert
         Assert.IsNotNull(result);
@@ -83,54 +79,8 @@ public class EndpointInvokerTests
     }
 }
 
-public interface ITestApi
-{
-    [Get("/getAll")]
-    Task<IEnumerable<TestResponse>> GetAllAsync();
-
-    [Get("/getOne/{id}")]
-    Task<TestResponse> GetOneAsync([Path] int id, [Query] bool includeSome = false);
-}
-
 public class TestResponse
 {
-    public string Id { get; set; }
-
-    public bool IncludeSome { get; set; } = false;
-}
-
-public class TestApi : ITestApi
-{
-    private readonly IEndpointInvoker endpointInvoker;
-
-    public TestApi(IEndpointInvoker endpointInvoker)
-    {
-        this.endpointInvoker = endpointInvoker;
-    }
-
-    public async Task<IEnumerable<TestResponse>> GetAllAsync()
-    {
-        var methodCallInfo = endpointInvoker.GetMethodCallInfo<ITestApi>();
-
-        var result = await endpointInvoker.InvokeEndpointAsync<IEnumerable<TestResponse>>(
-            methodCallInfo.HttpMethod,
-            methodCallInfo.Path
-        );
-
-        return result;
-    }
-
-    public async Task<TestResponse> GetOneAsync(int id, bool includeSome = false)
-    {
-        var methodCallInfo = endpointInvoker.GetMethodCallInfo<ITestApi>(nameof(GetOneAsync));
-
-        var result = await endpointInvoker.InvokeEndpointAsync<TestResponse>(
-            methodCallInfo.HttpMethod,
-            methodCallInfo.Path,
-            new Dictionary<string, object> { { "id", id.ToString() } },
-            new Dictionary<string, object> { { "includeSome", includeSome.ToString() } }
-        );
-
-        return result;
-    }
+    public required string Id { get; set; }
+    public bool IncludeSome { get; set; }
 }

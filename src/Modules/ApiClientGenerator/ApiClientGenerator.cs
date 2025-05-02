@@ -1,6 +1,6 @@
-using System.Reflection;
 using System.Text;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Text;
 
 namespace ApiClientGenerator;
@@ -8,158 +8,150 @@ namespace ApiClientGenerator;
 [Generator(LanguageNames.CSharp)]
 public class ApiClientGenerator : IIncrementalGenerator
 {
+    private int _fileCounter = 0;
 
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
-        var assembly = Assembly.GetExecutingAssembly();
+        // Register a syntax receiver that will gather interface declarations
+        var interfaceDeclarations = context.SyntaxProvider
+            .CreateSyntaxProvider(
+                predicate: (s, _) => s is InterfaceDeclarationSyntax { Identifier: { Text: var text } } && text.EndsWith("Api"),
+                transform: (ctx, _) => (InterfaceDeclarationSyntax)ctx.Node)
+            .Collect();
 
-        // Find all interfaces that inherit from IEndpointInvoker
-        var interfaceTypes = assembly.GetTypes()
-            .Where(t => t.IsInterface && t.Name.EndsWith("Api"));
-
-        foreach (var interfaceType in interfaceTypes)
+        // Register the source output
+        context.RegisterSourceOutput(interfaceDeclarations, (spc, interfaceDecls) =>
         {
-            // Generate the source code for the API client
-            var soureCode = ApiClientSourceTextGenerator.GenerateApiClient(interfaceType);
-            // Inject the created source
-            context.RegisterPostInitializationOutput(ctx => ctx.AddSource($"{interfaceType.Name}Client.g.cs", SourceText.From(soureCode, Encoding.UTF8)));
-        }
+            foreach (var interfaceDecl in interfaceDecls)
+            {
+                var sourceText = GenerateApiClientSource(interfaceDecl);
+                var uniqueCounter = Interlocked.Increment(ref _fileCounter);
+                var fileName = $"{interfaceDecl.Identifier.Text}Client_{uniqueCounter}.g.cs";
+                spc.AddSource(fileName, sourceText);
+            }
+        });
     }
-}
 
-
-public class ApiClientSourceTextGenerator
-{
-
-
-    public static string GenerateApiClient(Type interfaceType)
+    private static SourceText GenerateApiClientSource(InterfaceDeclarationSyntax interfaceDecl)
     {
-        var interfaceName = interfaceType.Name;
+        var namespaceName = GetNamespace(interfaceDecl);
+        var interfaceName = interfaceDecl.Identifier.Text;
         var className = interfaceName.StartsWith("I") ? interfaceName.Substring(1) : interfaceName + "Client";
 
-        var sourceBuilder = new StringBuilder();
-        sourceBuilder.AppendLine("using System.Collections.Generic;");
-        sourceBuilder.AppendLine("using System.Threading.Tasks;");
-        sourceBuilder.AppendLine("using Common;");
-        sourceBuilder.AppendLine();
+        var source = new StringBuilder();
+        source.AppendLine("using System;");
+        source.AppendLine("using System.Collections.Generic;");
+        source.AppendLine("using System.Threading.Tasks;");
+        source.AppendLine("using Common;");
+        source.AppendLine("using RestEase;");
+        source.AppendLine();
 
-        // Add namespace if the interface has one
-        var hasNamespace = !string.IsNullOrEmpty(interfaceType.Namespace);
-        if (hasNamespace)
+        if (!string.IsNullOrEmpty(namespaceName))
         {
-            sourceBuilder.AppendLine($"namespace {interfaceType.Namespace};");
-            sourceBuilder.AppendLine();
+            source.AppendLine($"namespace {namespaceName};");
+            source.AppendLine();
         }
 
-        // Generate class declaration
-        sourceBuilder.AppendLine($"public class {className} : {interfaceName}");
-        sourceBuilder.AppendLine("{");
-
-        // Add private field and constructor
-        sourceBuilder.AppendLine("    private readonly IEndpointInvoker _endpointInvoker;");
-        sourceBuilder.AppendLine();
-        sourceBuilder.AppendLine($"    public {className}(IEndpointInvoker endpointInvoker)");
-        sourceBuilder.AppendLine("    {");
-        sourceBuilder.AppendLine("        _endpointInvoker = endpointInvoker;");
-        sourceBuilder.AppendLine("    }");
-        sourceBuilder.AppendLine();
+        source.AppendLine($"public class {className} : {interfaceName}");
+        source.AppendLine("{");
+        source.AppendLine("    private readonly IEndpointInvoker _endpointInvoker;");
+        source.AppendLine();
+        source.AppendLine($"    public {className}(IEndpointInvoker endpointInvoker)");
+        source.AppendLine("    {");
+        source.AppendLine("        _endpointInvoker = endpointInvoker;");
+        source.AppendLine("    }");
+        source.AppendLine();
 
         // Generate method implementations
-        foreach (var method in interfaceType.GetMethods())
+        foreach (var methodDecl in interfaceDecl.Members.OfType<MethodDeclarationSyntax>())
         {
-            GenerateMethodImplementation(method, sourceBuilder);
-            sourceBuilder.AppendLine();
+            GenerateMethodImplementation(methodDecl, source);
+            source.AppendLine();
         }
 
-        sourceBuilder.AppendLine("}");
+        source.AppendLine("}");
 
-        return sourceBuilder.ToString();
+        return SourceText.From(source.ToString(), Encoding.UTF8);
     }
 
-    private static void GenerateMethodImplementation(MethodInfo method, StringBuilder sourceBuilder)
+    private static void GenerateMethodImplementation(MethodDeclarationSyntax methodDecl, StringBuilder source)
     {
-        var parameters = method.GetParameters();
-        var parameterList = string.Join(", ", parameters.Select(p => $"{p.ParameterType.Name} {p.Name}"));
+        var methodName = methodDecl.Identifier.Text;
+        var returnType = methodDecl.ReturnType.ToString();
+        var parameters = methodDecl.ParameterList.Parameters;
+        var parameterList = string.Join(", ", parameters.Select(p => $"{p.Type} {p.Identifier}"));
 
-        var interfaceType = method.DeclaringType ?? throw new InvalidOperationException("Method must have a declaring type");
+        source.AppendLine($"    public {returnType} {methodName}({parameterList})");
+        source.AppendLine("    {");
 
-        // Generate method signature
-        sourceBuilder.AppendLine($"    public async {GetTypeName(method.ReturnType)} {method.Name}({parameterList})");
-        sourceBuilder.AppendLine("    {");
+        var interfaceIdentifier = ((InterfaceDeclarationSyntax)methodDecl.Parent).Identifier.Text;
+        source.AppendLine($$"""        var methodCallInfo = _endpointInvoker.GetMethodCallInfo<{{interfaceIdentifier}}>("{{methodName}}");""");
+        source.AppendLine();
 
-        // Get method call info
-        sourceBuilder.AppendLine($"        var methodCallInfo = _endpointInvoker.GetMethodCallInfo<{interfaceType.Name}>();");
-        sourceBuilder.AppendLine();
+        var pathParams = parameters.Where(p =>
+            p.AttributeLists.SelectMany(al => al.Attributes)
+             .Any(attr => attr.Name.ToString() == "Path"));
 
-        // Build route values dictionary if there are Path parameters
-        var pathParams = parameters.Where(p => p.GetCustomAttributes().Any(a => a.GetType().Name == "PathAttribute"));
         if (pathParams.Any())
         {
-            sourceBuilder.AppendLine("        var routeValues = new Dictionary<string, object>()");
-            sourceBuilder.AppendLine("        {");
+            source.AppendLine("        var routeValues = new Dictionary<string, object>()");
+            source.AppendLine("        {");
             foreach (var param in pathParams)
             {
-                sourceBuilder.AppendLine($$$"""            { { "{{{param.Name}}}", {{{param.Name}}}.ToString() } },""");
+                source.AppendLine($"            {{ \"{param.Identifier}\", {param.Identifier}.ToString() }},");
             }
-            sourceBuilder.AppendLine("        };");
-            sourceBuilder.AppendLine();
+            source.AppendLine("        };");
+            source.AppendLine();
         }
 
-        // Build query values dictionary if there are Query parameters
-        var queryParams = parameters.Where(p => p.GetCustomAttributes().Any(a => a.GetType().Name == "QueryAttribute"));
+        var queryParams = parameters.Where(p =>
+            p.AttributeLists.SelectMany(al => al.Attributes)
+             .Any(attr => attr.Name.ToString() == "Query"));
+
         if (queryParams.Any())
         {
-            sourceBuilder.AppendLine("        var queryValues = new Dictionary<string, object>()");
-            sourceBuilder.AppendLine("        {");
+            source.AppendLine("        var queryValues = new Dictionary<string, object>()");
+            source.AppendLine("        {");
             foreach (var param in queryParams)
             {
-                sourceBuilder.AppendLine($$$"""            { { "{{{param.Name}}}", {{{param.Name}}}.ToString() } },""");
+                source.AppendLine($"            {{ \"{param.Identifier}\", {param.Identifier}.ToString() }},");
             }
-            sourceBuilder.AppendLine("        };");
-            sourceBuilder.AppendLine();
+            source.AppendLine("        };");
+            source.AppendLine();
         }
 
-        // Find body parameter if any
-        var bodyParam = parameters.FirstOrDefault(p => p.GetCustomAttributes().Any(a => a.GetType().Name == "BodyAttribute"));
+        var bodyParam = parameters.FirstOrDefault(p =>
+            p.AttributeLists.SelectMany(al => al.Attributes)
+             .Any(attr => attr.Name.ToString() == "Body"));
 
-        // Generate the InvokeEndpointAsync call
-        sourceBuilder.Append("        var result = await _endpointInvoker.InvokeEndpointAsync<");
-        sourceBuilder.Append(GetTypeNameButSkipTask(method.ReturnType));
-        sourceBuilder.AppendLine(">(");
-        sourceBuilder.AppendLine("            methodCallInfo.HttpMethod,");
-        sourceBuilder.AppendLine("            methodCallInfo.Path,");
-        sourceBuilder.AppendLine($"            {(pathParams.Any() ? "routeValues" : "null")},");
-        sourceBuilder.AppendLine($"            {(queryParams.Any() ? "queryValues" : "null")},");
-        sourceBuilder.AppendLine($"            {(bodyParam != null ? bodyParam.Name : "null")}");
-        sourceBuilder.AppendLine("        );");
-        sourceBuilder.AppendLine();
-
-        sourceBuilder.AppendLine("        return result;");
-        sourceBuilder.AppendLine("    }");
-    }
-
-    private static string GetTypeName(Type type)
-    {
-        if (!type.IsGenericType)
-            return type.Name;
-
-        var genericArgs = string.Join(", ", type.GetGenericArguments().Select(t => GetTypeName(t)));
-        var baseName = type.Name.Substring(0, type.Name.IndexOf('`'));
-        return $"{baseName}<{genericArgs}>";
-    }
-
-    private static string GetTypeNameButSkipTask(Type type)
-    {
-        if (!type.IsGenericType)
-            return type.Name;
-
-        if (type.Name.StartsWith("Task"))
+        // Get the actual return type (skip Task<>)
+        var returnTypeStr = returnType;
+        if (returnType.StartsWith("Task<"))
         {
-            var genericArg = type.GetGenericArguments().FirstOrDefault();
-            if (genericArg != null)
-                return GetTypeName(genericArg);
+            returnTypeStr = returnType.Substring(5, returnType.Length - 6);
         }
 
-        return GetTypeName(type);
+        source.AppendLine($"        return _endpointInvoker.InvokeEndpointAsync<{returnTypeStr}>(");
+        source.AppendLine("            methodCallInfo.HttpMethod,");
+        source.AppendLine("            methodCallInfo.Path,");
+        source.AppendLine($"            {(pathParams.Any() ? "routeValues" : "null")},");
+        source.AppendLine($"            {(queryParams.Any() ? "queryValues" : "null")},");
+        source.AppendLine($"            {(bodyParam != null ? bodyParam.Identifier.ToString() : "null")}");
+        source.AppendLine("        );");
+        source.AppendLine("    }");
+    }
+
+    private static string GetNamespace(InterfaceDeclarationSyntax interfaceDecl)
+    {
+        var parent = interfaceDecl.Parent;
+        while (parent != null)
+        {
+            if (parent is BaseNamespaceDeclarationSyntax namespaceDecl)
+            {
+                return namespaceDecl.Name.ToString();
+            }
+            parent = parent.Parent;
+        }
+        return string.Empty;
     }
 }
