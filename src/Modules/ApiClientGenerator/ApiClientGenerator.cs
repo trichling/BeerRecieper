@@ -86,10 +86,7 @@ public class ApiClientGenerator : IIncrementalGenerator
     )
     {
         var methodName = methodDecl.Identifier.Text;
-        var methodAttributes = methodDecl.AttributeLists
-            .SelectMany(al => al.Attributes)
-            .Select(attr => attr.Name.ToString())
-            .ToList();
+        var methodAttributes = methodDecl.AttributeLists.SelectMany(al => al.Attributes);
         var returnType = methodDecl.ReturnType.ToString();
         var parameters = methodDecl.ParameterList.Parameters;
         var parameterList = string.Join(", ", parameters.Select(p => $"{p.Type} {p.Identifier}"));

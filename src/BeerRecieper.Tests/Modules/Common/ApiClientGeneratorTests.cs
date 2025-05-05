@@ -2,7 +2,6 @@ using Common;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
-using RestEase;
 
 namespace BeerRecieper.Tests.Modules.Common;
 
@@ -58,6 +57,21 @@ public class ApiClientGeneratorTests
         Assert.AreEqual("3", oneResult.Id);
         Assert.IsTrue(oneResult.IncludeSome);
     }
+
+    [TestMethod]
+    public async Task GenerateClient()
+    {
+
+        var client = ClientGenerator.For<TestApi>();
+          
+        var allResults = await client.GetAllAsync();
+        var oneResult = await client.GetOneAsync(3, includeSome: true);
+
+        Assert.IsNotNull(allResults);
+        Assert.AreEqual(2, allResults.Count());
+        
+    }
+
 }
 
 
