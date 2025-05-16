@@ -62,7 +62,7 @@ public class ApiClientGeneratorTests
     public async Task GenerateClient()
     {
 
-        var client = ClientGenerator.For<TestApi>();
+        var client = ClientGenerator.For<ITestApi>();
           
         var allResults = await client.GetAllAsync();
         var oneResult = await client.GetOneAsync(3, includeSome: true);
