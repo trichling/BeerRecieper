@@ -132,6 +132,7 @@ public class EnumSerializationTests
         Assert.IsNotNull(result);
         Assert.IsNotNull(result.EnumProperty);
         Assert.AreEqual("Value3", result.EnumProperty.Value);
+        Assert.IsFalse(result.EnumProperty.TryParse(out var _));
         Assert.ThrowsException<JsonException>(() =>
         {
             _ = (TestStatus)result.EnumProperty;

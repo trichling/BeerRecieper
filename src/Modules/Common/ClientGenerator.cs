@@ -6,18 +6,21 @@ using System.Text;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Microsoft.Extensions.DependencyInjection;
 using RestEase;
 
 public static class ClientGenerator
 {
-    public static T For<T>()
+    public static T For<T>(IServiceProvider services)
         where T : class
     {
         var sourceCode = ApiClientSourceTextGenerator.GenerateApiClient(typeof(T));
         var assembly = CompileAssembly(sourceCode, typeof(T));
         var type = assembly.GetType($"{typeof(T).Namespace}.{typeof(T).Name.Substring(1)}");
 
-        return (T)Activator.CreateInstance(type, null);
+        var endpointInvoker = services.GetService<IEndpointInvoker>();
+
+        return (T)Activator.CreateInstance(type, endpointInvoker);
     }
 
     private static Assembly CompileAssembly(string sourceCode, Type interfaceType)
@@ -141,7 +144,7 @@ public class ApiClientSourceTextGenerator
 
         // Get method call info
         sourceBuilder.AppendLine(
-            $"        var methodCallInfo = _endpointInvoker.GetMethodCallInfo<{interfaceType.Name}>();"
+            $"        var methodCallInfo = _endpointInvoker.GetMethodCallInfo<{interfaceType.Name}>(\"{method.Name}\");"
         );
         sourceBuilder.AppendLine();
 
@@ -156,7 +159,7 @@ public class ApiClientSourceTextGenerator
             foreach (var param in pathParams)
             {
                 sourceBuilder.AppendLine(
-                    $$$"""            { { "{{{param.Name}}}", {{{param.Name}}}.ToString() } },"""
+                     $"            {{ \"{param.Name}\", {param.Name}.ToString() }},"
                 );
             }
             sourceBuilder.AppendLine("        };");
@@ -174,7 +177,7 @@ public class ApiClientSourceTextGenerator
             foreach (var param in queryParams)
             {
                 sourceBuilder.AppendLine(
-                    $$$"""            { { "{{{param.Name}}}", {{{param.Name}}}.ToString() } },"""
+                     $"            {{ \"{param.Name}\", {param.Name}.ToString() }},"
                 );
             }
             sourceBuilder.AppendLine("        };");
